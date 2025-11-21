@@ -1,5 +1,6 @@
 // relay.js
 require("dotenv").config();
+const http = require("http");
 const WebSocket = require("ws");
 
 // --- Config
@@ -11,65 +12,96 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 let widgetClients = new Set();
 let botClients = new Set();
 
-// --- Create WebSocket Server
-const wss = new WebSocket.Server({ port: PORT });
+// --- Create required HTTP server (Render needs this)
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end("WebSocket Relay Server running");
+});
 
-console.log("Secure Relay Server running on port", PORT);
+// --- Create WS servers without direct port binding
+const wssWidget = new WebSocket.Server({ noServer: true });
+const wssBot = new WebSocket.Server({ noServer: true });
 
-wss.on("connection", (ws, req) => {
-    const url = req.url || "/";
-    const params = new URLSearchParams(url.replace(/^.*\?/, ""));
+// --- Handle WebSocket Upgrade
+server.on("upgrade", (req, socket, head) => {
+  const url = req.url || "/";
+  const params = new URLSearchParams(url.replace(/^.*\?/, ""));
+  const token = params.get("token");
 
-    const token = params.get("token");
-    let role = null;
+  // Widget endpoint
+  if (url.startsWith("/widget") && token === WIDGET_TOKEN) {
+    wssWidget.handleUpgrade(req, socket, head, (ws) => {
+      wssWidget.emit("connection", ws, req);
+    });
+    return;
+  }
 
-    // --- Authentication Logic
-    if (url.startsWith("/widget") && token === WIDGET_TOKEN) {
-        role = "widget";
-        widgetClients.add(ws);
-        console.log("Widget connected");
-    } else if (url.startsWith("/bot") && token === BOT_TOKEN) {
-        role = "bot";
-        botClients.add(ws);
-        console.log("Bot connected");
-    } else {
-        console.log("Connection rejected (invalid token/role)");
-        ws.close();
-        return;
-    }
+  // Bot endpoint
+  if (url.startsWith("/bot") && token === BOT_TOKEN) {
+    wssBot.handleUpgrade(req, socket, head, (ws) => {
+      wssBot.emit("connection", ws, req);
+    });
+    return;
+  }
 
-    // --- Incoming message handler
-    ws.on("message", (msg) => {
-        try {
-            const data = JSON.parse(msg);
+  // Reject connections with bad token / endpoint
+  socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+  socket.destroy();
+});
 
-            if (role === "bot") {
-                // Forward bot message to all widgets
-                widgetClients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify(data));
-                    }
-                });
-            }
+// --- WIDGET CONNECTIONS
+wssWidget.on("connection", (ws) => {
+  console.log("Widget connected");
+  widgetClients.add(ws);
 
-            if (role === "widget") {
-                // Forward widget message to all bots
-                botClients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify(data));
-                    }
-                });
-            }
+  ws.on("message", (msg) => {
+    try {
+      const data = JSON.parse(msg);
 
-        } catch (err) {
-            console.error("Invalid JSON from", role, err);
+      // Forward to all bots
+      botClients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
         }
-    });
+      });
+    } catch (err) {
+      console.error("Invalid JSON from widget", err);
+    }
+  });
 
-    // --- Cleanup on disconnect
-    ws.on("close", () => {
-        widgetClients.delete(ws);
-        botClients.delete(ws);
-        console.log(`${role} disconnected`);
-    });
+  ws.on("close", () => {
+    widgetClients.delete(ws);
+    console.log("Widget disconnected");
+  });
+});
+
+// --- BOT CONNECTIONS
+wssBot.on("connection", (ws) => {
+  console.log("Bot connected");
+  botClients.add(ws);
+
+  ws.on("message", (msg) => {
+    try {
+      const data = JSON.parse(msg);
+
+      // Forward to all widgets
+      widgetClients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
+        }
+      });
+    } catch (err) {
+      console.error("Invalid JSON from bot", err);
+    }
+  });
+
+  ws.on("close", () => {
+    botClients.delete(ws);
+    console.log("Bot disconnected");
+  });
+});
+
+// --- Start HTTP server
+server.listen(PORT, () => {
+  console.log("Relay Server running on port", PORT);
 });
