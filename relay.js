@@ -14,8 +14,7 @@ let botClients = new Set();
 
 // --- Create required HTTP server (Render needs this)
 const server = http.createServer((req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    console.log("Request from IP:", ip);
+    console.log({ forwardedFor: req.headers['x-forwarded-for'], remoteAddress: req.socket.remoteAddress });
 
     // Normaler HTTP-Request
     if (req.url === "/ping") {
