@@ -14,9 +14,17 @@ let botClients = new Set();
 
 // --- Create required HTTP server (Render needs this)
 const server = http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end("WebSocket Relay Server running");
-});
+    // Normaler HTTP-Request
+    if (req.url === "/ping") {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end("pong");
+      return;
+    }
+  
+    // Default-Endpoint
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("WebSocket Relay Server running");
+  });
 
 // --- Create WS servers without direct port binding
 const wssWidget = new WebSocket.Server({ noServer: true });
