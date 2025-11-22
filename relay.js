@@ -14,8 +14,6 @@ let botClients = new Set();
 
 // --- Create required HTTP server (Render needs this)
 const server = http.createServer((req, res) => {
-    console.log({ forwardedFor: req.headers['x-forwarded-for'], remoteAddress: req.socket.remoteAddress });
-
     // Normaler HTTP-Request
     if (req.url === "/ping") {
       res.writeHead(200, { "Content-Type": "text/plain" });
@@ -23,6 +21,8 @@ const server = http.createServer((req, res) => {
       return;
     }
   
+    console.log({ url: req.url, forwardedFor: req.headers['x-forwarded-for'], remoteAddress: req.socket.remoteAddress });
+
     // Default-Endpoint
     res.writeHead(200, { "Content-Type": "text/plain" });
     res.end("WebSocket Relay Server running");
