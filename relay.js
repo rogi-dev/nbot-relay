@@ -51,11 +51,17 @@ wssWidget.on("connection", (ws) => {
   widgetClients.add(ws);
 
   ws.on("message", (msg) => {
-    botClients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg);
-      }
-    });
+    try {
+      const data = JSON.parse(msg);
+
+      botClients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
+        }
+      });
+    } catch (err) {
+      console.error("Invalid JSON from widget", err);
+    }
   });
 
   ws.on("close", () => {
@@ -69,11 +75,17 @@ wssBot.on("connection", (ws) => {
   botClients.add(ws);
 
   ws.on("message", (msg) => {
-    widgetClients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg);
-      }
-    });
+    try {
+      const data = JSON.parse(msg);
+
+      widgetClients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(data));
+        }
+      });
+    } catch (err) {
+      console.error("Invalid JSON from bot", err);
+    }
   });
 
   ws.on("close", () => {
