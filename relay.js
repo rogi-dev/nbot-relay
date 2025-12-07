@@ -7,7 +7,7 @@ const WIDGET_TOKEN = process.env.WIDGET_TOKEN;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
 let widgetClients = new Set();
-let botClients = new Set();
+let botClient = null;
 
 const server = http.createServer((req, res) => {
     if (req.url === "/ping") {
@@ -36,6 +36,12 @@ server.on("upgrade", (req, socket, head) => {
   }
 
   if (url.startsWith("/bot") && token === BOT_TOKEN) {
+    if (botClient && botClient.readyState === WebSocket.OPEN) {
+      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+      socket.destroy();
+      console.log("Rejected bot");
+      return;
+    }
     wssBot.handleUpgrade(req, socket, head, (ws) => {
       wssBot.emit("connection", ws, req);
     });
@@ -53,12 +59,9 @@ wssWidget.on("connection", (ws) => {
   ws.on("message", (msg) => {
     try {
       const data = JSON.parse(msg);
-
-      botClients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(data));
-        }
-      });
+      if (botClient && botClient.readyState === WebSocket.OPEN) {
+        botClient.send(JSON.stringify(data));
+      }
     } catch (err) {
       console.error("Invalid JSON from widget", err);
     }
@@ -72,7 +75,7 @@ wssWidget.on("connection", (ws) => {
 
 wssBot.on("connection", (ws) => {
   console.log("Bot connected");
-  botClients.add(ws);
+  botClient = ws;
 
   ws.on("message", (msg) => {
     try {
@@ -89,7 +92,9 @@ wssBot.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    botClients.delete(ws);
+    if (botClient === ws) {
+      botClient = null;
+    }
     console.log("Bot disconnected");
   });
 });
