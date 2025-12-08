@@ -65,7 +65,7 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 wssWidget.on("connection", (ws, topic) => {
-  console.log("Widget connected to topic", topic);
+  console.log("Widget connected to topic", topic, "lastValue:", lastValues[topic]);
   widgetClients[topic].add(ws);
   ws.topic = topic;
 
@@ -105,6 +105,7 @@ wssBot.on("connection", (ws) => {
       const topic = data.topic;
       if (topic && widgetClients[topic]) {
         lastValues[topic] = data.amount;
+        console.log("Updated last value for topic", topic, "to", data.amount, "formatted:", formatters[topic](data.amount));
         widgetClients[topic].forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({ 
