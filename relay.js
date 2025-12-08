@@ -9,12 +9,12 @@ const BOT_TOKEN = process.env.BOT_TOKEN;
 let botClient = null;
 
 let widgetClients = {
-  "monlthy-tips": new Set(),
+  "monthly-tips": new Set(),
   "session-tips": new Set(),
   "session-bits": new Set()
 };
 const formatters = {
-  "monlthy-tips": (amount) => amount.toLocaleString("de-DE", { style: "currency", currency: "EUR" }),
+  "monthly-tips": (amount) => amount.toLocaleString("de-DE", { style: "currency", currency: "EUR" }),
   "session-tips": (amount) => amount.toLocaleString("de-DE", { style: "currency", currency: "EUR" }),
   "session-bits": (amount) => amount
 };
