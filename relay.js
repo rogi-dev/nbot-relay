@@ -79,9 +79,7 @@ wssWidget.on("connection", (ws, topic) => {
   ws.on("message", (msg) => {
     try {
       const data = JSON.parse(msg);
-      if (botClient && botClient.readyState === WebSocket.OPEN) {
-        botClient.send(JSON.stringify(data));
-      }
+      console.log("Received message from widget", data);
     } catch (err) {
       console.error("Invalid JSON from widget", err);
     }
@@ -105,7 +103,7 @@ wssBot.on("connection", (ws) => {
       const topic = data.topic;
       if (topic && widgetClients[topic]) {
         lastValues[topic] = data.amount;
-        console.log("Updated last value for topic", topic, "to", data.amount, "formatted:", formatters[topic](data.amount));
+        console.log("Updated last value for topic", topic, "to", data.amount);
         widgetClients[topic].forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({ 
