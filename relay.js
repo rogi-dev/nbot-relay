@@ -100,10 +100,10 @@ wssBot.on("connection", (ws) => {
   ws.on("message", (msg) => {
     try {
       const data = JSON.parse(msg);
+      console.log("Received message from widget", data);
       const topic = data.topic;
       if (topic && widgetClients[topic]) {
         lastValues[topic] = data.amount;
-        console.log("Updated last value for topic", topic, "to", data.amount);
         widgetClients[topic].forEach((client) => {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({ 
