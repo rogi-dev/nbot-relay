@@ -100,7 +100,7 @@ wssBot.on("connection", (ws) => {
   ws.on("message", (msg) => {
     try {
       const data = JSON.parse(msg);
-      console.log("Received message from widget", data);
+      console.log("Received message from bot", data);
       const topic = data.topic;
       if (topic && widgetClients[topic]) {
         lastValues[topic] = data.amount;
