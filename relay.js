@@ -69,12 +69,11 @@ wssWidget.on("connection", (ws, topic) => {
   widgetClients[topic].add(ws);
   ws.topic = topic;
 
-  if (lastValues[topic]) {
-    ws.send(JSON.stringify({
-      value: lastValues[topic],
-      formatted: formatters[topic](lastValues[topic])
-    }));
-  }
+  const value = lastValues[topic] || 0;
+  ws.send(JSON.stringify({
+    value: value,
+    formatted: formatters[topic](value)
+  }));
 
   ws.on("message", (msg) => {
     try {
