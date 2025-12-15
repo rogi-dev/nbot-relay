@@ -32,12 +32,14 @@ const initWebSocketServer = () => {
               }));
             });
           });
-          widget.widgetClients[topic].forEach((client) => {
-            client.send(JSON.stringify({
-              value: data.amount,
-              formatted: widget.formatters[topic](data.amount)
-            }));
-          });
+          if (widget.widgetClients[topic]) {
+            widget.widgetClients[topic].forEach((client) => {
+              client.send(JSON.stringify({
+                value: data.amount,
+                formatted: widget.formatters[topic](data.amount)
+              }));
+            });
+          }
         }
       } catch (err) {
         console.error("Error processing bot message:", err);
