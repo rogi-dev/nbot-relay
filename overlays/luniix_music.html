@@ -1,0 +1,172 @@
+<style>
+  * {
+    font-family: 'Nunito Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    overflow: hidden;
+    text-shadow: rgb(0, 0, 0) 1px 1px 1px;
+    color: rgb(0, 0, 0);
+    text-align: left;
+    line-height: 1.3;
+    letter-spacing: 1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+</style>
+
+<div style="position: absolute; top: 1047px; left: 8px;">
+  <span>Trinkgeld:</span>
+  <span class="session-tips-euro">0,00 €</span>
+</div>
+
+<div style="position: absolute; top: 1047px; left: 950px;">
+  <span>Sonnenstrahlen (Bits):</span>
+  <span class="session-bits">0</span>
+</div>
+
+<div style="position: absolute; top: -19px; left: 1702px;">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <style>
+    #goal-christmas-image {
+      width: 200px;
+      height: 240px;
+    }
+
+    #goal-christmas-label {
+      font-size: 18px;
+    }
+  </style>
+
+  <div id="goal-christmas-image"></div>
+  <div style="text-align: center;">
+    <span class="monthly-tips-fixed2">0,00</span>
+    <span>/</span>
+    <span>500 €</span>
+  </div>
+  <div id="goal-christmas-label">Uffzember Support</div>
+
+  <script>
+    let lastProgress = 0;
+    let waveOffset = 0;
+
+    const circleTop = 40;
+    const circleBottom = 215;
+
+    // Build wave path
+    const createWavePath = (amplitude, wavelength, height, offset) => {
+        let path = `M 0 ${height}`;
+        const width = 200;
+
+        for (let x = 0; x <= width; x++) {
+            const y = height + Math.sin((x + offset) / wavelength) * amplitude;
+            path += ` L ${x} ${y}`;
+        }
+        path += ` L 200 240 L 0 240 Z`;
+        return path;
+    };
+
+    const renderBall = (progress, offset) => {
+        // ---- FIXED HEIGHT CALCULATION ----
+        const fillY = circleBottom - (progress / 100) * (circleBottom - circleTop);
+        const fillHeight = circleBottom - fillY;
+        // -----------------------------------
+
+        const wave1 = createWavePath(6, 18, fillY + 5, offset);
+        const wave2 = createWavePath(3, 28, fillY + 3, offset * 0.7);
+
+        return `
+            <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="fillGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+                        <stop offset="50%" style="stop-color:#ee5a6f;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#c92a2a;stop-opacity:1" />
+                    </linearGradient>
+
+
+                    <!-- Gradient for unfilled (transparent with subtle outline) -->
+                    <linearGradient id="emptyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.1" />
+                        <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+                    </linearGradient>
+                    
+                    <!-- Shine effect -->
+                    <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.6" />
+                        <stop offset="50%" style="stop-color:#ffffff;stop-opacity:0.2" />
+                        <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
+                    </linearGradient>
+
+                    <clipPath id="ballClip">
+                        <circle cx="100" cy="130" r="85"/>
+                    </clipPath>
+                </defs>
+
+                <!-- Waves clipped inside the sphere -->
+                <g clip-path="url(#ballClip)">
+                    <path d="${wave2}" fill="#ff888866"/>
+                    <path d="${wave1}" fill="url(#fillGradient)"/>
+                </g>
+
+                <!-- Ball outlines and highlights -->
+                <circle cx="100" cy="130" r="86" fill="url(#emptyGradient)" stroke="#aaa" stroke-width="1" opacity="0.3"/>
+                <circle cx="100" cy="130" r="85" fill="none" stroke="#fff" stroke-width="1" opacity="0.5"/>
+
+                <!-- Highlights -->
+                <ellipse cx="70" cy="100" rx="25" ry="35" fill="url(#shineGradient)" opacity="0.5"/>
+                <ellipse cx="130" cy="150" rx="15" ry="20" fill="#ffffff" opacity="0.2"/>
+
+                
+                <!-- Hanging loop -->
+                <path d="M 95 30 Q 95 17, 100 15 Q 105 17, 105 20" 
+                      fill="none" 
+                      stroke="#d4af37" 
+                      stroke-width="3" 
+                      stroke-linecap="round"/>
+                
+                <!-- Inner shine on loop -->
+                <path d="M 97 30 Q 97 17, 100 17" 
+                      fill="none" 
+                      stroke="#f4d03f" 
+                      stroke-width="1.5" 
+                      stroke-linecap="round" 
+                      opacity="0.7"/>
+
+
+                <!-- Ornament cap base -->
+                <rect x="82" y="31" width="36" height="15" rx="3" fill="#d4af37" stroke="#b8860b" stroke-width="1.5"/>
+                
+                <!-- Ornament cap details -->
+                <rect x="85" y="33" width="30" height="3" fill="#f4d03f" opacity="0.7"/>
+                <rect x="85" y="40" width="30" height="3" fill="#b8860b" opacity="0.5"/>
+            </svg>
+        `;
+    };
+
+    const animateWaves = () => {
+        waveOffset += 0.5;
+        document.getElementById("goal-christmas-image").innerHTML = renderBall(lastProgress, waveOffset);
+        requestAnimationFrame(animateWaves);
+    };
+
+    const updateCounter = (amount) => {      
+        const newProgress = Math.min(amount / 500 * 100, 100);
+
+        anime({
+            targets: { p: lastProgress },
+            p: newProgress,
+            duration: 900,
+            easing: "easeInOutQuad",
+            update: anim => {
+                lastProgress = anim.animations[0].currentValue;
+            },
+            complete: () => {
+                lastProgress = newProgress;
+            }
+        });
+    };
+    dataListeners.push(data => updateCounter(data["monthly-tips"]));
+    updateCounter(dataStore["monthly-tips"]);
+    animateWaves();
+  </script>
+</div>

@@ -1,0 +1,70 @@
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@700&display=swap" rel="stylesheet">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<script>
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = `${protocol}//${window.location.host}${window.location.pathname}${window.location.search}`;
+  
+  let dataStore = {
+    "monthly-bits": 0,
+    "session-bits": 0,
+    "monthly-subs": 0,
+    "session-subs": 0,
+    "monthly-sub-points": 0,
+    "session-sub-points": 0,
+    "monthly-tips": 0,
+    "session-tips": 0
+  }
+
+  let dataListeners = []
+
+  const formatEuro = (amount) => amount.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+  
+  const connect = () => {
+    const socket = new WebSocket(url);
+   
+    socket.onopen = () => {
+      console.log("WebSocket connected");
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if(data.type === 'reload') {
+        window.location.reload();
+        return;
+      }
+
+      if (data.type === 'data') {
+        dataStore = data.data;
+        
+        dataListeners.forEach(listener => {
+          listener(dataStore);
+        });
+
+        Object.entries(dataStore).forEach(([key, value]) => {
+          document.querySelectorAll(`.${key}`).forEach(span => {
+            span.textContent = value;
+          });
+          document.querySelectorAll(`.${key}-euro`).forEach(span => {
+            span.textContent = formatEuro(value);
+          });
+          document.querySelectorAll(`.${key}-fixed2`).forEach(span => {
+            span.textContent = value.toFixed(2).replace('.', ',');
+          });
+        });
+      }
+    };
+    
+    socket.onclose = () => {
+      console.log("WebSocket disconnected, reconnecting...");
+      setTimeout(connect, 1000);
+    };
+  };
+
+  connect();
+</script>
+
+<body width="1920" height="1080">
+  (CONTENT)
+</body>
