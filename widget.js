@@ -3,6 +3,7 @@ const { dataStore } = require("./data-handler");
 
 const WIDGET_TOKEN = process.env.WIDGET_TOKEN;
 
+let wss = null;
 let widgetClients = {
   "monthly-tips": new Set(),
   "session-tips": new Set(),
