@@ -22,7 +22,7 @@ const initWebSocketServer = () => {
         const data = JSON.parse(msg);
         console.log("Received message from bot", data);
         const topic = data.topic;
-        if (topic && data.amount && dataStore.hasOwnProperty(topic)) {
+        if (topic && dataStore.hasOwnProperty(topic)) {
           dataStore[topic] = data.amount;
           Object.values(overlay.socketClients).forEach((clients) => {
             clients.forEach((client) => {
